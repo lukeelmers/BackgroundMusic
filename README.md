@@ -62,7 +62,9 @@ the **Background Music** device. You can create the aggregate device using the *
 
 # Download
 
-**Requires macOS 10.13+**.
+**Requires macOS 10.13+**. Tested and compatible with macOS Tahoe 26.2 on Apple Silicon (M4 Pro and newer).
+
+> **Note for macOS Tahoe 26.2 Users**: Special compatibility fixes have been implemented for per-app volume control on macOS Tahoe 26.2 and Apple Silicon M4 Pro. See [MACOS_TAHOE_COMPATIBILITY.md](MACOS_TAHOE_COMPATIBILITY.md) for details.
 
 You can download the current version of **Background Music** using the following options. We also have [snapshot builds](https://github.com/kyleneideck/BackgroundMusic/releases).
 
@@ -160,6 +162,8 @@ as a microphone. (We're working on it in [#177](/../../issues/177).)
 If the volume slider for an app isn't working, try looking in `More Apps` for entries like `Some
 App (Helper)`. For some meeting or video chat apps, you may need to do this to change the current
 meeting volume.
+
+**macOS Tahoe 26.2 Users**: If you're experiencing issues with per-app volume sliders on macOS Tahoe 26.2 (especially on Apple M4 Pro or newer), ensure you're running the latest version with Tahoe compatibility fixes. See [MACOS_TAHOE_COMPATIBILITY.md](MACOS_TAHOE_COMPATIBILITY.md) for detailed information.
 
 ## Known issues and solutions
 
