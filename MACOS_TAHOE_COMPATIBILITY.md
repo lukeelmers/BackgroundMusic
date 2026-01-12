@@ -120,8 +120,13 @@ On macOS Tahoe with enhanced security features:
 
 The validation logic:
 ```c
+// Validation constants
+#define BGM_MAX_REASONABLE_PID 99999
+#define BGM_MIN_VALID_HEAP_ADDR 0x100000000ULL
+#define BGM_MAX_VALID_HEAP_ADDR 0x800000000000ULL
+
 // Valid heap pointers on 64-bit macOS are typically in this range
-if (ptrValue > 0x100000000ULL && ptrValue < 0x800000000000ULL) {
+if (ptrValue > BGM_MIN_VALID_HEAP_ADDR && ptrValue < BGM_MAX_VALID_HEAP_ADDR) {
     // Additional CFString type check before dereferencing
     if (CFGetTypeID(bundleID) == CFStringGetTypeID()) {
         // Safe to use

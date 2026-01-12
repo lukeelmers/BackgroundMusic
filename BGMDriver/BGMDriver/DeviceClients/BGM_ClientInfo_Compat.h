@@ -17,7 +17,7 @@
 //  BGM_ClientInfo_Compat.h
 //  BGMDriver
 //
-//  Copyright © 2026 Background Music contributors
+//  Copyright © 2024-2026 Background Music contributors
 //
 //  Compatibility layer for AudioServerPlugInClientInfo structure changes
 //  across macOS versions, particularly for macOS Tahoe 26.x and later.
@@ -31,6 +31,15 @@
 #include <AvailabilityMacros.h>
 
 #pragma clang assume_nonnull begin
+
+// Validation constants for process ID checking
+// PIDs on macOS are typically under 100,000 for user processes
+#define BGM_MAX_REASONABLE_PID 99999
+
+// Memory address validation constants for 64-bit macOS
+// Valid heap pointers are typically in this range (excluding kernel space)
+#define BGM_MIN_VALID_HEAP_ADDR 0x100000000ULL
+#define BGM_MAX_VALID_HEAP_ADDR 0x800000000000ULL
 
 //==================================================================================================
 //	BGM_ClientInfo_GetSafeValues
@@ -78,7 +87,7 @@ static inline void BGM_ClientInfo_GetSafeValues(const AudioServerPlugInClientInf
     if (outProcessID != NULL) {
         // Validate that the PID is reasonable (not negative, not absurdly large)
         pid_t pid = inClientInfo->mProcessID;
-        if (pid >= 0 && pid < 99999) {
+        if (pid >= 0 && pid < BGM_MAX_REASONABLE_PID) {
             *outProcessID = pid;
         } else {
             // Invalid PID, use 0 as fallback
@@ -106,10 +115,10 @@ static inline void BGM_ClientInfo_GetSafeValues(const AudioServerPlugInClientInf
             // check if the pointer value seems reasonable
             uintptr_t ptrValue = (uintptr_t)bundleID;
             
-            // On 64-bit systems, valid heap pointers are typically > 0x100000000
-            // and < 0x800000000000 (excluding kernel space)
+            // On 64-bit systems, valid heap pointers are typically in the defined range
+            // (excluding kernel space)
             // This is a heuristic check to avoid dereferencing garbage
-            if (ptrValue > 0x100000000ULL && ptrValue < 0x800000000000ULL) {
+            if (ptrValue > BGM_MIN_VALID_HEAP_ADDR && ptrValue < BGM_MAX_VALID_HEAP_ADDR) {
                 // Now check if it's actually a CFString
                 // We use CFGetTypeID carefully with exception handling
                 @try {
