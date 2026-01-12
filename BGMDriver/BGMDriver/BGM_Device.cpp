@@ -35,6 +35,7 @@
 #include "BGM_PlugIn.h"
 #include "BGM_XPCHelper.h"
 #include "BGM_Utils.h"
+#include "DeviceClients/BGM_ClientInfo_Compat.h"
 
 // PublicUtility Includes
 #include "CADispatchQueue.h"
@@ -1930,11 +1931,17 @@ UInt32	BGM_Device::_HW_GetRingBufferFrameSize() const
 
 void	BGM_Device::AddClient(const AudioServerPlugInClientInfo* inClientInfo)
 {
-    DebugMsg("BGM_Device::AddClient: Adding client %u (%s)",
-             inClientInfo->mClientID,
-             (inClientInfo->mBundleID == NULL ?
-                 "no bundle ID" :
-                 CFStringGetCStringPtr(inClientInfo->mBundleID, kCFStringEncodingUTF8)));
+    // Safely extract client information to handle structure changes in macOS Tahoe 26.x and later
+    UInt32 clientID = 0;
+    CFStringRef bundleID = NULL;
+    BGM_ClientInfo_GetSafeValues(inClientInfo, &clientID, NULL, NULL, &bundleID);
+    
+    const char* bundleIDStr = (bundleID == NULL) ? "no bundle ID" : CFStringGetCStringPtr(bundleID, kCFStringEncodingUTF8);
+    if (bundleIDStr == NULL && bundleID != NULL) {
+        bundleIDStr = "(bundle ID present but not convertible)";
+    }
+    
+    DebugMsg("BGM_Device::AddClient: Adding client %u (%s)", clientID, bundleIDStr);
     
     CAMutex::Locker theStateLocker(mStateMutex);
 
@@ -1943,14 +1950,24 @@ void	BGM_Device::AddClient(const AudioServerPlugInClientInfo* inClientInfo)
 
 void	BGM_Device::RemoveClient(const AudioServerPlugInClientInfo* inClientInfo)
 {
-    DebugMsg("BGM_Device::RemoveClient: Removing client %u (%s)",
-             inClientInfo->mClientID,
-             CFStringGetCStringPtr(inClientInfo->mBundleID, kCFStringEncodingUTF8));
+    // Safely extract client information to handle structure changes in macOS Tahoe 26.x and later
+    UInt32 clientID = 0;
+    CFStringRef bundleID = NULL;
+    BGM_ClientInfo_GetSafeValues(inClientInfo, &clientID, NULL, NULL, &bundleID);
+    
+    const char* bundleIDStr = CFStringGetCStringPtr(bundleID, kCFStringEncodingUTF8);
+    if (bundleIDStr == NULL && bundleID != NULL) {
+        bundleIDStr = "(bundle ID present but not convertible)";
+    } else if (bundleIDStr == NULL) {
+        bundleIDStr = "no bundle ID";
+    }
+    
+    DebugMsg("BGM_Device::RemoveClient: Removing client %u (%s)", clientID, bundleIDStr);
     
     CAMutex::Locker theStateLocker(mStateMutex);
 
     // If we're removing BGMApp, reenable all of BGMDevice's controls.
-    if(mClients.IsBGMApp(inClientInfo->mClientID))
+    if(mClients.IsBGMApp(clientID))
     {
         RequestEnabledControls(true, true);
     }
