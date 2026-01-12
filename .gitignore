@@ -10,6 +10,7 @@ BGM.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
 Images/*.aux
 Images/*.log
 /archives/
+_codeql_detected_source_root
 
 # Everything below is from https://github.com/github/gitignore/blob/master/Objective-C.gitignore
 
