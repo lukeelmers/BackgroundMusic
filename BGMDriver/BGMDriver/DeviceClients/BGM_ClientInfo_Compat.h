@@ -120,16 +120,14 @@ static inline void BGM_ClientInfo_GetSafeValues(const AudioServerPlugInClientInf
             // This is a heuristic check to avoid dereferencing garbage
             if (ptrValue > BGM_MIN_VALID_HEAP_ADDR && ptrValue < BGM_MAX_VALID_HEAP_ADDR) {
                 // Now check if it's actually a CFString
-                // We use CFGetTypeID carefully with exception handling
-                @try {
-                    if (CFGetTypeID(bundleID) == CFStringGetTypeID()) {
-                        *outBundleID = bundleID;
-                    } else {
-                        // Not a CFString, treat as NULL
-                        *outBundleID = NULL;
-                    }
-                } @catch (NSException *exception) {
-                    // Invalid pointer, treat as NULL
+                // CFGetTypeID is safe to call on valid CF objects
+                // For invalid pointers that pass our range check, CFGetTypeID may crash,
+                // but this is extremely unlikely given our validation
+                CFTypeID typeID = CFGetTypeID(bundleID);
+                if (typeID == CFStringGetTypeID()) {
+                    *outBundleID = bundleID;
+                } else {
+                    // Not a CFString, treat as NULL
                     *outBundleID = NULL;
                 }
             } else {
