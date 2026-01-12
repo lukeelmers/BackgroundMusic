@@ -94,6 +94,7 @@
 		1C0CB6A91C50A3AF0084C15A /* CAAutoDisposer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CAAutoDisposer.h; path = PublicUtility/CAAutoDisposer.h; sourceTree = "<group>"; };
 		1C0CB6B01C642C600084C15A /* BGM_Client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BGM_Client.cpp; sourceTree = "<group>"; };
 		1C0CB6B11C642C600084C15A /* BGM_Client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BGM_Client.h; sourceTree = "<group>"; };
+		1C0CB6B1AC642C600084C15B /* BGM_ClientInfo_Compat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BGM_ClientInfo_Compat.h; sourceTree = "<group>"; };
 		1C0CB6B21C642C600084C15A /* BGM_ClientMap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BGM_ClientMap.cpp; sourceTree = "<group>"; };
 		1C0CB6B31C642C600084C15A /* BGM_ClientMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BGM_ClientMap.h; sourceTree = "<group>"; };
 		1C0CB6B41C642C600084C15A /* BGM_Clients.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BGM_Clients.cpp; sourceTree = "<group>"; };
@@ -218,6 +219,7 @@
 			children = (
 				1C0CB6B11C642C600084C15A /* BGM_Client.h */,
 				1C0CB6B01C642C600084C15A /* BGM_Client.cpp */,
+				1C0CB6B1AC642C600084C15B /* BGM_ClientInfo_Compat.h */,
 				1C0CB6B31C642C600084C15A /* BGM_ClientMap.h */,
 				1C0CB6B21C642C600084C15A /* BGM_ClientMap.cpp */,
 				1C0CB6B51C642C600084C15A /* BGM_Clients.h */,
