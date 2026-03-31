@@ -23,19 +23,31 @@
 // Self Include
 #include "BGM_Client.h"
 
+// Local Includes
+#include "BGM_ClientInfo_Compat.h"
+
 
 BGM_Client::BGM_Client(const AudioServerPlugInClientInfo* inClientInfo)
-:
-    mClientID(inClientInfo->mClientID),
-    mProcessID(inClientInfo->mProcessID),
-    mIsNativeEndian(inClientInfo->mIsNativeEndian),
-    mBundleID(inClientInfo->mBundleID)
 {
+    // Use safe extraction to handle potential AudioServerPlugInClientInfo structure changes
+    // in macOS Tahoe 26.x and later versions, especially on Apple Silicon (M4 Pro and newer).
+    UInt32 clientID = 0;
+    pid_t processID = 0;
+    Boolean isNativeEndian = true;
+    CFStringRef bundleID = NULL;
+    
+    BGM_ClientInfo_GetSafeValues(inClientInfo, &clientID, &processID, &isNativeEndian, &bundleID);
+    
+    mClientID = clientID;
+    mProcessID = processID;
+    mIsNativeEndian = isNativeEndian;
+    mBundleID = bundleID;
+    
     // The bundle ID ref we were passed is only valid until our plugin returns control to the HAL, so we need to retain
     // it. (CACFString will handle the rest of its ownership/destruction.)
-    if(inClientInfo->mBundleID != NULL)
+    if(bundleID != NULL)
     {
-        CFRetain(inClientInfo->mBundleID);
+        CFRetain(bundleID);
     }
 }
 
