@@ -471,7 +471,7 @@ bool    BGM_TaskQueue::ProcessNonRealTimeThreadTask(BGM_Task* inTask)
             DebugMsg("BGM_TaskQueue::ProcessNonRealTimeThreadTask: Processing kBGMTaskSendPropertyNotification");
             {
                 AudioObjectPropertyAddress thePropertyAddress[] = {
-                    { static_cast<UInt32>(inTask->GetArg1()), kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster } };
+                    { static_cast<UInt32>(inTask->GetArg1()), kAudioObjectPropertyScopeGlobal, kMasterChannel } };
                 BGM_PlugIn::Host_PropertiesChanged(static_cast<AudioObjectID>(inTask->GetArg2()), 1, thePropertyAddress);
             }
             break;

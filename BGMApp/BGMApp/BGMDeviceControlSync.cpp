@@ -34,10 +34,10 @@
 #pragma clang assume_nonnull begin
 
 static const AudioObjectPropertyAddress kMutePropertyAddress =
-    { kAudioDevicePropertyMute, kAudioObjectPropertyScopeOutput, kAudioObjectPropertyElementMaster };
+    { kAudioDevicePropertyMute, kAudioObjectPropertyScopeOutput, kMasterChannel };
 
 static const AudioObjectPropertyAddress kVolumePropertyAddress =
-    { kAudioDevicePropertyVolumeScalar, kAudioObjectPropertyScopeOutput, kAudioObjectPropertyElementMaster };
+    { kAudioDevicePropertyVolumeScalar, kAudioObjectPropertyScopeOutput, kMasterChannel };
 
 #pragma mark Construction/Destruction
 

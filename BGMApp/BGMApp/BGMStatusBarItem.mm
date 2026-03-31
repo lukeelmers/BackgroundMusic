@@ -24,6 +24,7 @@
 #import "BGMStatusBarItem.h"
 
 // Local Includes
+#import "BGM_Types.h"
 #import "BGM_Utils.h"
 #import "BGMUserDefaults.h"
 #import "BGMVolumeChangeListener.h"
@@ -243,7 +244,7 @@ static CGFloat const kVolumeIconAdditionalVerticalPadding = 0.075;
     // give up.
     BGM_Utils::LogAndSwallowExceptions(BGMDbgArgs, [&] {
         AudioObjectPropertyScope scope = kAudioObjectPropertyScopeOutput;
-        AudioObjectPropertyScope element = kAudioObjectPropertyElementMaster;
+        AudioObjectPropertyScope element = kMasterChannel;
 
         BOOL hasVolume = bgmDevice.HasVolumeControl(scope, element);
 

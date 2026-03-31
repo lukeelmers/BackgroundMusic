@@ -85,7 +85,7 @@ bool    BGMAudioDevice::HasSettableVirtualMasterVolume(AudioObjectPropertyScope 
     AudioObjectPropertyAddress virtualMasterVolumeAddress = {
         kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
         inScope,
-        kAudioObjectPropertyElementMaster
+        kMasterChannel
     };
 
     // TODO: Replace these calls deprecated AudioToolbox functions. There are more below.
@@ -224,7 +224,7 @@ bool    BGMAudioDevice::GetVirtualMasterVolumeScalar(AudioObjectPropertyScope in
     AudioObjectPropertyAddress virtualMasterVolumeAddress = {
         kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
         inScope,
-        kAudioObjectPropertyElementMaster
+        kMasterChannel
     };
 
 #pragma clang diagnostic push
@@ -269,7 +269,7 @@ bool    BGMAudioDevice::SetVirtualMasterVolumeScalar(AudioObjectPropertyScope in
         AudioObjectPropertyAddress virtualMasterVolumeAddress = {
             kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
             inScope,
-            kAudioObjectPropertyElementMaster
+            kMasterChannel
         };
 
         didSetVolume = (kAudioServicesNoError == AHSSetPropertyData(GetObjectID(),
@@ -281,7 +281,7 @@ bool    BGMAudioDevice::SetVirtualMasterVolumeScalar(AudioObjectPropertyScope in
         AudioObjectPropertyAddress virtualMasterBalanceAddress = {
             kAudioHardwareServiceDeviceProperty_VirtualMainBalance,
             inScope,
-            kAudioObjectPropertyElementMaster
+            kMasterChannel
         };
 
 #pragma clang diagnostic push
@@ -314,7 +314,7 @@ bool    BGMAudioDevice::GetVirtualMasterBalance(AudioObjectPropertyScope inScope
     AudioObjectPropertyAddress virtualMasterBalanceAddress = {
         kAudioHardwareServiceDeviceProperty_VirtualMainBalance,
         inScope,
-        kAudioObjectPropertyElementMaster
+        kMasterChannel
     };
 
 #pragma clang diagnostic push
