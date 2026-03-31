@@ -221,7 +221,7 @@ void    BGM_Clients::SendIORunningNotifications(bool sendIsRunningNotification, 
             if(sendIsRunningNotification)
             {
                 DebugMsg("BGM_Clients::SendIORunningNotifications: Sending kAudioDevicePropertyDeviceIsRunning");
-                theChangedProperties[0] = { kAudioDevicePropertyDeviceIsRunning, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+                theChangedProperties[0] = { kAudioDevicePropertyDeviceIsRunning, kAudioObjectPropertyScopeGlobal, kMasterChannel };
                 theNotificationCount++;
             }
 
@@ -349,18 +349,20 @@ bool    BGM_Clients::SetClientsRelativeVolumes(const CACFArray inAppVolumes)
 
                 // Try to update the client's volume, first by PID and then by bundle ID. Always try
                 // both because apps can have multiple clients.
-                if(mClientMap.SetClientsRelativeVolume(theAppPID, theRelativeVolume))
+                bool didFindByPID = mClientMap.SetClientsRelativeVolume(theAppPID, theRelativeVolume);
+                bool didFindByBundleID = mClientMap.SetClientsRelativeVolume(theAppBundleID, theRelativeVolume);
+
+                if(didFindByPID || didFindByBundleID)
                 {
                     didChangeAppVolumes = true;
                 }
-
-                if(mClientMap.SetClientsRelativeVolume(theAppBundleID, theRelativeVolume))
+                else if(theAppBundleID.IsValid())
                 {
+                    // The app isn't currently a client, but store the volume so it will be
+                    // applied when the app registers as a client.
+                    mClientMap.SetPastClientRelativeVolume(theAppBundleID, theRelativeVolume);
                     didChangeAppVolumes = true;
                 }
-
-                // TODO: If the app isn't currently a client, we should add it to the past clients
-                //       map, or update its past volume if it's already in there.
             }
         }
         
@@ -369,18 +371,18 @@ bool    BGM_Clients::SetClientsRelativeVolumes(const CACFArray inAppVolumes)
             SInt32 thePanPosition;
             didGetPanPosition = theAppVolume.GetSInt32(CFSTR(kBGMAppVolumesKey_PanPosition), thePanPosition);
             if (didGetPanPosition) {
-                if(mClientMap.SetClientsPanPosition(theAppPID, thePanPosition))
+                bool didFindPanByPID = mClientMap.SetClientsPanPosition(theAppPID, thePanPosition);
+                bool didFindPanByBundleID = mClientMap.SetClientsPanPosition(theAppBundleID, thePanPosition);
+
+                if(didFindPanByPID || didFindPanByBundleID)
                 {
                     didChangeAppVolumes = true;
                 }
-
-                if(mClientMap.SetClientsPanPosition(theAppBundleID, thePanPosition))
+                else if(theAppBundleID.IsValid())
                 {
+                    mClientMap.SetPastClientPanPosition(theAppBundleID, thePanPosition);
                     didChangeAppVolumes = true;
                 }
-
-                // TODO: If the app isn't currently a client, we should add it to the past clients
-                //       map, or update its past pan position if it's already in there.
             }
         }
         

@@ -103,6 +103,14 @@ BGM_Client    BGM_ClientMap::RemoveClient(UInt32 inClientID)
             "BGM_ClientMap::RemoveClient: Could not find client to be removed");
     
     BGM_Client theClient = theClientItr->second;
+
+    // Update the past client map with the client's current settings so they're preserved if the
+    // client is re-added. This is important because on some macOS versions (Tahoe 26.x+) clients
+    // can be removed and re-added more frequently due to CoreAudio stack changes.
+    if(theClient.mBundleID.IsValid())
+    {
+        mPastClientMap[theClient.mBundleID] = theClient;
+    }
     
     // Remove the client from the shadow maps
     mClientMapShadow.erase(theClientItr);
@@ -322,6 +330,13 @@ bool BGM_ClientMap::SetClientsRelativeVolume(pid_t searchKey, Float32 inRelative
                 theClient->mRelativeVolume = inRelativeVolume;
                 
                 ShowSetRelativeVolumeMessage(searchKey, theClient);
+
+                // Keep the past client map in sync so the volume persists if the client is
+                // removed and re-added (which happens more frequently on macOS Tahoe 26.x+).
+                if(theClient->mBundleID.IsValid())
+                {
+                    mPastClientMap[theClient->mBundleID].mRelativeVolume = inRelativeVolume;
+                }
                 
                 didChangeVolume = true;
             }
@@ -352,6 +367,11 @@ bool BGM_ClientMap::SetClientsRelativeVolume(CACFString searchKey, Float32 inRel
                 theClient->mRelativeVolume = inRelativeVolume;
                 
                 ShowSetRelativeVolumeMessage(searchKey, theClient);
+
+                if(theClient->mBundleID.IsValid())
+                {
+                    mPastClientMap[theClient->mBundleID].mRelativeVolume = inRelativeVolume;
+                }
                 
                 didChangeVolume = true;
             }
@@ -372,11 +392,16 @@ bool BGM_ClientMap::SetClientsPanPosition(pid_t searchKey, SInt32 inPanPosition)
     CAMutex::Locker theShadowMapsLocker(mShadowMapsMutex);
     
     auto theSetPansInShadowMapsFunc = [&] {
-        // Look up the clients for the key and update their pan positions
         auto theClients = GetClients(searchKey);
         if(theClients != nullptr) {
             for(auto theClient: *theClients) {
                 theClient->mPanPosition = inPanPosition;
+
+                if(theClient->mBundleID.IsValid())
+                {
+                    mPastClientMap[theClient->mBundleID].mPanPosition = inPanPosition;
+                }
+
                 didChangePanPosition = true;
             }
         }
@@ -396,11 +421,16 @@ bool BGM_ClientMap::SetClientsPanPosition(CACFString searchKey, SInt32 inPanPosi
     CAMutex::Locker theShadowMapsLocker(mShadowMapsMutex);
 
     auto theSetPansInShadowMapsFunc = [&] {
-        // Look up the clients for the key and update their pan positions
         auto theClients = GetClients(searchKey);
         if(theClients != nullptr) {
             for(auto theClient: *theClients) {
                 theClient->mPanPosition = inPanPosition;
+
+                if(theClient->mBundleID.IsValid())
+                {
+                    mPastClientMap[theClient->mBundleID].mPanPosition = inPanPosition;
+                }
+
                 didChangePanPosition = true;
             }
         }
@@ -411,6 +441,30 @@ bool BGM_ClientMap::SetClientsPanPosition(CACFString searchKey, SInt32 inPanPosi
     theSetPansInShadowMapsFunc();
     
     return didChangePanPosition;
+}
+
+void    BGM_ClientMap::SetPastClientRelativeVolume(CACFString inAppBundleID, Float32 inRelativeVolume)
+{
+    if(!inAppBundleID.IsValid())
+    {
+        return;
+    }
+
+    CAMutex::Locker theShadowMapsLocker(mShadowMapsMutex);
+    mPastClientMap[inAppBundleID].mRelativeVolume = inRelativeVolume;
+    mPastClientMap[inAppBundleID].mBundleID = inAppBundleID;
+}
+
+void    BGM_ClientMap::SetPastClientPanPosition(CACFString inAppBundleID, SInt32 inPanPosition)
+{
+    if(!inAppBundleID.IsValid())
+    {
+        return;
+    }
+
+    CAMutex::Locker theShadowMapsLocker(mShadowMapsMutex);
+    mPastClientMap[inAppBundleID].mPanPosition = inPanPosition;
+    mPastClientMap[inAppBundleID].mBundleID = inAppBundleID;
 }
 
 void    BGM_ClientMap::UpdateClientIOStateNonRT(UInt32 inClientID, bool inDoingIO)

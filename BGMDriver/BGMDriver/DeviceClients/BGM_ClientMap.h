@@ -139,6 +139,12 @@ public:
     // Returns true if a client for bundle ID inAppBundleID was found and its pan position changed.
     // inAppBundleID may contain a null CFStringRef, in which case it returns false.
     bool                                                SetClientsPanPosition(CACFString inAppBundleID, SInt32 inPanPosition);
+
+    // Store volume/pan for an app in the past clients map so it will be applied when the app
+    // registers as a client. Used when a volume change is received for an app that isn't
+    // currently a client.
+    void                                                SetPastClientRelativeVolume(CACFString inAppBundleID, Float32 inRelativeVolume);
+    void                                                SetPastClientPanPosition(CACFString inAppBundleID, SInt32 inPanPosition);
     
     void                                                StartIONonRT(UInt32 inClientID) { UpdateClientIOStateNonRT(inClientID, true); }
     void                                                StopIONonRT(UInt32 inClientID) { UpdateClientIOStateNonRT(inClientID, false); }

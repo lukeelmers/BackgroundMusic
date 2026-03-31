@@ -77,8 +77,14 @@ enum
 };
 
 // AudioObjectPropertyElement docs: "Elements are numbered sequentially where 0 represents the
-// master element."
+// main element."
+// kAudioObjectPropertyElementMaster was deprecated in macOS 12 and replaced with
+// kAudioObjectPropertyElementMain (same value: 0).
+#if defined(kAudioObjectPropertyElementMain)
+static const AudioObjectPropertyElement kMasterChannel = kAudioObjectPropertyElementMain;
+#else
 static const AudioObjectPropertyElement kMasterChannel = kAudioObjectPropertyElementMaster;
+#endif
 
 #pragma BGM Plug-in Custom Properties
 
@@ -182,37 +188,37 @@ enum
 static const AudioObjectPropertyAddress kBGMMusicPlayerProcessIDAddress = {
     kAudioDeviceCustomPropertyMusicPlayerProcessID,
     kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 static const AudioObjectPropertyAddress kBGMMusicPlayerBundleIDAddress = {
     kAudioDeviceCustomPropertyMusicPlayerBundleID,
     kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 static const AudioObjectPropertyAddress kBGMAudibleStateAddress = {
     kAudioDeviceCustomPropertyDeviceAudibleState,
     kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 static const AudioObjectPropertyAddress kBGMRunningSomewhereOtherThanBGMAppAddress = {
     kAudioDeviceCustomPropertyDeviceIsRunningSomewhereOtherThanBGMApp,
     kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 static const AudioObjectPropertyAddress kBGMAppVolumesAddress = {
     kAudioDeviceCustomPropertyAppVolumes,
     kAudioObjectPropertyScopeGlobal,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 static const AudioObjectPropertyAddress kBGMEnabledOutputControlsAddress = {
     kAudioDeviceCustomPropertyEnabledOutputControls,
     kAudioObjectPropertyScopeOutput,
-    kAudioObjectPropertyElementMaster
+    kMasterChannel
 };
 
 #pragma mark XPC Return Codes

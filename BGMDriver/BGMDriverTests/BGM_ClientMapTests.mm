@@ -220,5 +220,194 @@ static BGM_Client client2(&client2Info);
     });
 }
 
+#pragma mark Volume Persistence Tests
+
+// This test simulates what happens on macOS Tahoe 26.x+ where clients are removed and re-added
+// more frequently by the CoreAudio stack. The per-app volume set by the user should persist.
+- (void)testVolumePersistsAcrossClientRemoveAndReAdd {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    // Add a client and set its volume to something non-default
+    BGM_Client testClient(&client1Info);
+    clientMap.AddClient(testClient);
+
+    Float32 customVolume = 0.25f;
+    bool didChange = clientMap.SetClientsRelativeVolume(client1Info.mProcessID, customVolume);
+    XCTAssert(didChange);
+
+    // Verify the volume was set
+    BGM_Client retrieved;
+    bool didGet = clientMap.GetClientNonRT(client1Info.mClientID, &retrieved);
+    XCTAssert(didGet);
+    XCTAssertEqualWithAccuracy(retrieved.mRelativeVolume, customVolume, 0.001f);
+
+    // Remove the client (simulating what CoreAudio does on Tahoe)
+    clientMap.RemoveClient(client1Info.mClientID);
+
+    // Re-add the client with a new client ID (simulating CoreAudio assigning a new ID)
+    const AudioServerPlugInClientInfo reAddedInfo = {
+        /* mClientID = */ 999,
+        /* mProcessID = */ client1Info.mProcessID,
+        /* mIsNativeEndian = */ true,
+        /* mBundleID = */ client1Info.mBundleID
+    };
+    BGM_Client reAddedClient(&reAddedInfo);
+    clientMap.AddClient(reAddedClient);
+
+    // The custom volume should have been restored from the past client map
+    BGM_Client retrievedAfterReAdd;
+    didGet = clientMap.GetClientNonRT(reAddedInfo.mClientID, &retrievedAfterReAdd);
+    XCTAssert(didGet);
+    XCTAssertEqualWithAccuracy(retrievedAfterReAdd.mRelativeVolume, customVolume, 0.001f);
+}
+
+- (void)testPanPositionPersistsAcrossClientRemoveAndReAdd {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    BGM_Client testClient(&client1Info);
+    clientMap.AddClient(testClient);
+
+    SInt32 customPan = -50;
+    bool didChange = clientMap.SetClientsPanPosition(client1Info.mProcessID, customPan);
+    XCTAssert(didChange);
+
+    clientMap.RemoveClient(client1Info.mClientID);
+
+    const AudioServerPlugInClientInfo reAddedInfo = {
+        /* mClientID = */ 888,
+        /* mProcessID = */ client1Info.mProcessID,
+        /* mIsNativeEndian = */ true,
+        /* mBundleID = */ client1Info.mBundleID
+    };
+    BGM_Client reAddedClient(&reAddedInfo);
+    clientMap.AddClient(reAddedClient);
+
+    BGM_Client retrieved;
+    bool didGet = clientMap.GetClientNonRT(reAddedInfo.mClientID, &retrieved);
+    XCTAssert(didGet);
+    XCTAssertEqual(retrieved.mPanPosition, customPan);
+}
+
+- (void)testVolumeSetByBundleIDPersistsAcrossClientChurn {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    BGM_Client testClient(&client1Info);
+    clientMap.AddClient(testClient);
+
+    // Set volume by bundle ID instead of PID
+    Float32 customVolume = 0.5f;
+    CACFString bundleID(client1Info.mBundleID);
+    bool didChange = clientMap.SetClientsRelativeVolume(bundleID, customVolume);
+    XCTAssert(didChange);
+
+    // Remove and re-add with different PID but same bundle ID
+    clientMap.RemoveClient(client1Info.mClientID);
+
+    const AudioServerPlugInClientInfo reAddedInfo = {
+        /* mClientID = */ 777,
+        /* mProcessID = */ 9999,
+        /* mIsNativeEndian = */ true,
+        /* mBundleID = */ client1Info.mBundleID
+    };
+    BGM_Client reAddedClient(&reAddedInfo);
+    clientMap.AddClient(reAddedClient);
+
+    BGM_Client retrieved;
+    bool didGet = clientMap.GetClientNonRT(reAddedInfo.mClientID, &retrieved);
+    XCTAssert(didGet);
+    XCTAssertEqualWithAccuracy(retrieved.mRelativeVolume, customVolume, 0.001f);
+}
+
+- (void)testSetPastClientRelativeVolume {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    // Set volume for an app that isn't a client yet
+    CACFString bundleID(CFSTR("com.example.future.app"));
+    Float32 presetVolume = 0.75f;
+    clientMap.SetPastClientRelativeVolume(bundleID, presetVolume);
+
+    // Now add a client with that bundle ID
+    const AudioServerPlugInClientInfo futureInfo = {
+        /* mClientID = */ 555,
+        /* mProcessID = */ 12345,
+        /* mIsNativeEndian = */ true,
+        /* mBundleID = */ CFSTR("com.example.future.app")
+    };
+    BGM_Client futureClient(&futureInfo);
+    clientMap.AddClient(futureClient);
+
+    // The preset volume should be applied
+    BGM_Client retrieved;
+    bool didGet = clientMap.GetClientNonRT(futureInfo.mClientID, &retrieved);
+    XCTAssert(didGet);
+    XCTAssertEqualWithAccuracy(retrieved.mRelativeVolume, presetVolume, 0.001f);
+}
+
+- (void)testSetPastClientPanPosition {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    CACFString bundleID(CFSTR("com.example.future.app.pan"));
+    SInt32 presetPan = 75;
+    clientMap.SetPastClientPanPosition(bundleID, presetPan);
+
+    const AudioServerPlugInClientInfo futureInfo = {
+        /* mClientID = */ 444,
+        /* mProcessID = */ 54321,
+        /* mIsNativeEndian = */ true,
+        /* mBundleID = */ CFSTR("com.example.future.app.pan")
+    };
+    BGM_Client futureClient(&futureInfo);
+    clientMap.AddClient(futureClient);
+
+    BGM_Client retrieved;
+    bool didGet = clientMap.GetClientNonRT(futureInfo.mClientID, &retrieved);
+    XCTAssert(didGet);
+    XCTAssertEqual(retrieved.mPanPosition, presetPan);
+}
+
+// Simulates rapid remove+re-add cycles that can happen on macOS Tahoe
+- (void)testVolumeStableAcrossMultipleClientChurnCycles {
+    BGM_ClientMap clientMap(&taskQueue);
+
+    Float32 userVolume = 0.3f;
+    SInt32 userPan = 40;
+    UInt32 baseClientID = 100;
+
+    // Add initial client
+    BGM_Client testClient(&client1Info);
+    clientMap.AddClient(testClient);
+
+    // Set user's preferred volume and pan
+    clientMap.SetClientsRelativeVolume(client1Info.mProcessID, userVolume);
+    clientMap.SetClientsPanPosition(client1Info.mProcessID, userPan);
+
+    // Simulate 5 cycles of remove+re-add (as might happen on Tahoe)
+    for(int cycle = 0; cycle < 5; cycle++)
+    {
+        // Get the current client ID to remove
+        UInt32 currentClientID = (cycle == 0) ? client1Info.mClientID : (baseClientID + cycle - 1);
+        clientMap.RemoveClient(currentClientID);
+
+        UInt32 newClientID = baseClientID + cycle;
+        const AudioServerPlugInClientInfo cycleInfo = {
+            /* mClientID = */ newClientID,
+            /* mProcessID = */ client1Info.mProcessID,
+            /* mIsNativeEndian = */ true,
+            /* mBundleID = */ client1Info.mBundleID
+        };
+        BGM_Client cycleClient(&cycleInfo);
+        clientMap.AddClient(cycleClient);
+
+        // Verify volume and pan are preserved each time
+        BGM_Client retrieved;
+        bool didGet = clientMap.GetClientNonRT(newClientID, &retrieved);
+        XCTAssert(didGet);
+        XCTAssertEqualWithAccuracy(retrieved.mRelativeVolume, userVolume, 0.001f,
+            @"Volume was not preserved after churn cycle %d", cycle);
+        XCTAssertEqual(retrieved.mPanPosition, userPan,
+            @"Pan position was not preserved after churn cycle %d", cycle);
+    }
+}
+
 @end
 
